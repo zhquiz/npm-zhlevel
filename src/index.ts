@@ -13,6 +13,10 @@ export class Level {
 
   V_LEVEL_POW = 3
 
+  close() {
+    this.db.close()
+  }
+
   hLevel(v: string) {
     const raw = [...v.matchAll(/\p{sc=Han}/gu)].map((m) => m[0])
     if (!raw.length) {
@@ -97,6 +101,10 @@ export class Frequency {
       PRIMARY KEY ("entry", "lang")
     );
     `)
+  }
+
+  close() {
+    this.db.close()
   }
 
   async vFreq<K extends string = string>(...vs: K[]) {
