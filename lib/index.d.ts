@@ -5,5 +5,11 @@ export declare class Level {
     hLevel(v: string): number;
     vLevel(v: string): any;
 }
+export declare class Frequency {
+    lang: string;
+    db: sqlite3.Database;
+    constructor(lang?: string);
+    vFreq<K extends string = string>(...vs: K[]): Promise<any>;
+}
 export declare function makePinyin(entry: string): any;
 //# sourceMappingURL=index.d.ts.map

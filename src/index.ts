@@ -1,9 +1,10 @@
 import path from 'path'
 
-import jieba from 'nodejieba'
+import axios from 'axios'
 import sqlite3 from 'better-sqlite3'
 //@ts-ignore
 import toPinyin from 'chinese-to-pinyin'
+import jieba from 'nodejieba'
 
 export class Level {
   db: sqlite3.Database = sqlite3(path.join(__dirname, '../assets/zhlevel.db'), {
@@ -81,6 +82,72 @@ export class Level {
         raw.length) /
       (entriesMap.size * entriesMap.size)
     )
+  }
+}
+
+export class Frequency {
+  db: sqlite3.Database = sqlite3(path.join(__dirname, '../assets/frequency.db'))
+
+  constructor(public lang = 'zh') {}
+
+  async vFreq<K extends string = string>(...vs: K[]) {
+    if (!vs.length) {
+      return {}
+    }
+
+    const out1 = this.db
+      .prepare(
+        /* sql */ `
+    SELECT "entry", "frequency" FROM "frequency" WHERE "lang" = ? "entry" IN (${Array(
+      vs.length
+    ).fill('?')})
+    `
+      )
+      .all(this.lang, ...vs)
+      .reduce(
+        (prev, r: { entry: string; frequency: number }) => ({
+          ...prev,
+          [r.entry]: r.frequency
+        }),
+        {}
+      )
+
+    vs = vs.filter((v) => !out1[v])
+
+    if (!vs.length) {
+      return out1
+    }
+
+    const { data: out2 } = await axios.post(
+      `https://cdn.zhquiz.cc/api/wordfreq?lang=${encodeURIComponent(
+        this.lang
+      )}`,
+      {
+        q: vs
+      }
+    )
+
+    if (Object.keys(out2).length) {
+      const stmt = this.db.prepare(/* sql */ `
+      INSERT INTO "frequency" ("entry", "frequency", "lang")
+      VALUES (@entry, @frequency, @lang)
+      `)
+
+      this.db.transaction(() => {
+        Object.entries(out2).map(([k, v]) => {
+          stmt.run({
+            entry: k,
+            frequency: v,
+            lang: this.lang
+          })
+        })
+      })()
+    }
+
+    return {
+      ...out1,
+      ...out2
+    }
   }
 }
 
