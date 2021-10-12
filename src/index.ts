@@ -88,7 +88,16 @@ export class Level {
 export class Frequency {
   db: sqlite3.Database = sqlite3(path.join(__dirname, '../assets/frequency.db'))
 
-  constructor(public lang = 'zh') {}
+  constructor(public lang = 'zh') {
+    this.db.exec(/* sql */ `
+    CREATE TABLE IF NOT EXISTS "frequency" (
+      "entry"       TEXT NOT NULL,
+      "lang"        TEXT NOT NULL,
+      "frequency"   FLOAT NOT NULL,
+      PRIMARY KEY ("entry", "lang")
+    );
+    `)
+  }
 
   async vFreq<K extends string = string>(...vs: K[]) {
     if (!vs.length) {
