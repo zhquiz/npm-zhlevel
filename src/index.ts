@@ -115,7 +115,7 @@ export class Frequency {
     const out1 = this.db
       .prepare(
         /* sql */ `
-    SELECT "entry", "frequency" FROM "frequency" WHERE "lang" = ? "entry" IN (${Array(
+    SELECT "entry", "frequency" FROM "frequency" WHERE "lang" = ? AND "entry" IN (${Array(
       vs.length
     ).fill('?')})
     `
@@ -146,7 +146,7 @@ export class Frequency {
 
     if (Object.keys(out2).length) {
       const stmt = this.db.prepare(/* sql */ `
-      INSERT INTO "frequency" ("entry", "frequency", "lang")
+      INSERT OR REPLACE INTO "frequency" ("entry", "frequency", "lang")
       VALUES (@entry, @frequency, @lang)
       `)
 
